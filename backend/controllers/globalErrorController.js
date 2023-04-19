@@ -24,16 +24,33 @@ const prodError = (res, err) => {
 };
 
 const handleValidationError = (error) => {
-  let allErrors = Object.values(error.errors).map((e) => e.message);
+  // let allErrors = Object.values(error.errors).map((e) => e.message);
+  let allErrors = {};
 
-  const message = `Invalid input: ${allErrors.join(' ')}`;
+  // store the errors as a key value pair
+  Object.values(error.errors).forEach((item) => {
+    return (allErrors[item.path] = item.message);
+  });
+
+  // const message = `Invalid input: ${allErrors.join(' ')}`;
+  const message = JSON.stringify(allErrors);
 
   return new AppError(message, 400);
 };
 
 const handleDuplicateFieldsError = (error) => {
-  const message = 'Duplicate field';
-  return new AppError(message, 400);
+  // const message = 'Duplicate field';
+  // return new AppError(message, 400);
+
+  let allErrors = {};
+
+  Object.keys(error.keyValue).forEach((item) => {
+    return (allErrors[
+      item
+    ] = `This value already exists. Please use another value`);
+  });
+
+  return new AppError(JSON.stringify(allErrors), 400);
 };
 
 const globalErrorController = (err, req, res, next) => {
@@ -47,6 +64,7 @@ const globalErrorController = (err, req, res, next) => {
     let error = { ...err };
     error.name = err.name;
     error.code = err.code;
+    error.message = err.message;
 
     if (error.name === 'ValidationError') {
       error = handleValidationError(err);

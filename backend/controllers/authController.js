@@ -20,10 +20,16 @@ exports.signup = asyncErrorHandler(async (req, res, next) => {
 
   const token = generateToken(newUser._id);
 
+  const user = {
+    name: newUser.name,
+    email: newUser.email,
+    _id: newUser._id,
+  };
+
   res.status(200).json({
     status: 'success',
     data: {
-      user: newUser,
+      user: user,
       token: token,
     },
   });
@@ -33,8 +39,22 @@ exports.login = asyncErrorHandler(async (req, res, next) => {
   const { email, password } = req.body;
 
   // 1. check if the email and the password
+  // if (!email || !password) {
+  //   return next(new AppError('Email and Password are required!'), 400);
+  // }
+
   if (!email || !password) {
-    return next(new AppError('Email and Password are required!'), 400);
+    let message = {};
+
+    if (!email) {
+      message.email = 'Email is required';
+    }
+
+    if (!password) {
+      message.password = 'Password is required';
+    }
+
+    return next(new AppError(JSON.stringify(message)), 400);
   }
 
   // 2. check if the user exists, and the password is correct
