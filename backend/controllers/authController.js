@@ -3,6 +3,7 @@ const AppError = require('../utils/appError');
 const asyncErrorHandler = require('../utils/asyncErrorHandler');
 const jwt = require('jsonwebtoken');
 const sendEmailToResetPassword = require('../utils/handleEmail');
+const crypto = require('crypto');
 
 const generateToken = (userid) => {
   const token = jwt.sign({ id: userid }, process.env.JWT_SECRET, {
@@ -119,4 +120,44 @@ exports.forgotPassword = asyncErrorHandler(async (req, res, next) => {
 });
 
 // this would receive the reset token and the updated password from the user
-exports.resetPassword = asyncErrorHandler(async () => {});
+exports.resetPassword = asyncErrorHandler(async (req, res, next) => {
+  // 1. Encrypt the token, recieved as an url param and compare it with the token saved in the database, get user based on the token
+  const hash = crypto.createHash('sha256');
+  const encryptedTokenString = hash
+    .update(req.params.resettoken)
+    .digest()
+    .toString('hex');
+
+  // the passwordResetTokenExpiresIn property should be greater than the time right now
+
+  const user = await User.findOne({
+    passwordResetToken: encryptedTokenString,
+    passwordResetTokenExpiresIn: { $gt: Date.now() },
+  });
+
+  // 2. if the token in valid and the user exists, then update the password
+  if (!user) {
+    return next(new AppError('Token has expired', 400));
+  }
+
+  user.password = req.body.password;
+  user.confirmPassword = req.body.confirmPassword;
+  user.passwordResetToken = undefined;
+  user.passwordResetTokenExpiresIn = undefined;
+  await user.save();
+
+  // 3. Login the user and send JWT.
+  const token = generateToken(user._id);
+  const userWithModifiedPassword = {
+    name: user.name,
+    email: user.email,
+  };
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user: userWithModifiedPassword,
+      token: token,
+    },
+  });
+});
