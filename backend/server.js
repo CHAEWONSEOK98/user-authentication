@@ -2,12 +2,16 @@ const express = require('express');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
+const path = require('path');
 
 // utils
 const AppError = require('./utils/appError');
 const globalErrorController = require('./controllers/globalErrorController');
 
 const app = express();
+
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views')); // ./views
 
 dotenv.config({ path: './config.env' });
 
@@ -25,7 +29,16 @@ if (process.env.NODE_ENV === 'developement') {
   app.use(morgan('dev'));
 }
 
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 5001;
+
+//Routes for pug templates
+app.get('/', (req, res) => {
+  res.render('emailTemplate', {
+    text: 'Forgot password? Submit a new password and confirm password by clicking the button below',
+    user: 'Chaygyul',
+    url: '#',
+  });
+});
 
 //Routes
 const userRoutes = require('./routes/userRoutes');
