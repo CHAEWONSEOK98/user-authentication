@@ -1,5 +1,10 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { registerUser, loginUser, forgotPassword } from './authActions';
+import {
+  registerUser,
+  loginUser,
+  forgotPassword,
+  resetPassword,
+} from './authActions';
 
 // Get user from the local storage
 const user = JSON.parse(localStorage.getItem('user'));
@@ -72,6 +77,20 @@ export const authSlice = createSlice({
       .addCase(forgotPassword.rejected, (state, action) => {
         state.loading = false;
         state.error = true;
+        state.message = action.payload;
+      })
+      .addCase(resetPassword.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(resetPassword.fulfilled, (state, action) => {
+        state.loading = false;
+        state.success = true;
+        state.user = action.payload;
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = true;
+        state.user = null;
         state.message = action.payload;
       });
   },

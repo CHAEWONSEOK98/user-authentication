@@ -100,7 +100,7 @@ exports.forgotPassword = asyncErrorHandler(async (req, res, next) => {
 
   const text =
     'Forgot password? Submit a new password and confirm password by clicking the button below';
-  const url = `http://localhost:3000`;
+  const url = `http://localhost:3000/reset-password/${resetToken}`;
 
   try {
     // await sendEmailToResetPassword({
